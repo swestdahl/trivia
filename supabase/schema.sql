@@ -174,6 +174,8 @@ begin
   return photo_id;
 end;
 $$;
+comment on function public.add_bonus_photo(uuid,text,text,text) is
+  'Intentional anonymous guest endpoint. The 256-bit team token authenticates the caller, and writes are limited to that team and event path.';
 
 create or replace function public.get_my_photos(p_team_id uuid, p_token text)
 returns table(id uuid, object_path text, caption text, created_at timestamptz)
