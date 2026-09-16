@@ -17,7 +17,7 @@ A customizable, self-paced party trivia game with team photos, automatic scoring
 2. Run `supabase/schema.sql` in its SQL editor.
 3. Copy `.env.example` to `.env.local` and add the project URL and anon key.
 4. Run `pnpm install` and `pnpm dev`.
-5. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` as GitHub Actions repository secrets.
+5. Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in the Pages workflow. These are public browser credentials; never add a service-role key.
 6. In the repository Pages settings, choose **GitHub Actions** as the publishing source.
 
 The first person who signs into `/admin/` and claims the controls becomes the administrator.

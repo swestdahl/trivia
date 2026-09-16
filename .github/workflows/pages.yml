@@ -30,8 +30,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: https://iwelcdjivsifdhilkswx.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_FxnNcaN1D6EOgQ9mPZTLCg_jjtUzhZH
           NEXT_PUBLIC_BASE_PATH: /trivia
       - uses: actions/configure-pages@v5
         with:

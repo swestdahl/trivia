@@ -66,9 +66,10 @@ create table if not exists public.admins (
 create index if not exists idx_teams_event_completed_score on public.teams(event_id, completed_at, score desc);
 create index if not exists idx_photos_event_created on public.photos(event_id, created_at desc);
 create index if not exists idx_photos_team_created on public.photos(team_id, created_at desc);
+create index if not exists idx_responses_question on public.responses(question_id);
 
 create or replace function public.normalize_answer(value text) returns text
-language sql immutable parallel safe as $$
+language sql immutable parallel safe set search_path = pg_catalog as $$
   select regexp_replace(regexp_replace(lower(trim(coalesce(value,''))), '[^a-z0-9[:space:]]', '', 'g'), '[[:space:]]+', ' ', 'g')
 $$;
 
@@ -183,12 +184,13 @@ create policy "admins manage questions" on public.questions for all to authentic
 create policy "admins manage teams" on public.teams for all to authenticated using (private.is_admin()) with check (private.is_admin());
 create policy "admins manage responses" on public.responses for all to authenticated using (private.is_admin()) with check (private.is_admin());
 create policy "admins manage photos" on public.photos for all to authenticated using (private.is_admin()) with check (private.is_admin());
-create policy "admins read own admin row" on public.admins for select to authenticated using (user_id=auth.uid());
+create policy "admins read own admin row" on public.admins for select to authenticated using (user_id=(select auth.uid()));
 
 grant select on public.events,public.questions to anon,authenticated;
 grant select,insert,update,delete on public.events,public.questions,public.teams,public.responses,public.photos to authenticated;
 revoke all on function private.is_admin() from public;
 revoke all on function public.admin_status(),public.claim_admin(),public.join_team(text,text),public.set_team_photo(uuid,text,text),public.submit_quiz(uuid,text,jsonb),public.add_bonus_photo(uuid,text,text,text),public.get_my_photos(uuid,text),public.get_leaderboard(text) from public;
+revoke all on function public.admin_status(),public.claim_admin() from anon;
 grant execute on function private.is_admin() to authenticated;
 grant execute on function public.join_team(text,text),public.set_team_photo(uuid,text,text),public.submit_quiz(uuid,text,jsonb),public.add_bonus_photo(uuid,text,text,text),public.get_my_photos(uuid,text),public.get_leaderboard(text) to anon,authenticated;
 grant execute on function public.admin_status(),public.claim_admin() to authenticated;
