@@ -202,10 +202,10 @@ create policy "guests upload party photos" on storage.objects for insert to anon
 create policy "admins manage party photos" on storage.objects for all to authenticated using(bucket_id='party-photos' and private.is_admin()) with check(bucket_id='party-photos' and private.is_admin());
 
 insert into public.events(id,slug,title,description,status,leaderboard_visible) values
-('birthday-main','mom','How Well Do You Know Mom?','A birthday quiz made by the people who know her best.','open',true)
+('birthday-main','claire','How Well Do You Know Claire?','A birthday quiz made by the people who know Claire best.','open',true)
 on conflict(id) do nothing;
 insert into public.questions(event_id,position,type,prompt,choices,answers,points) values
-('birthday-main',1,'multiple_choice','Which decade did Mom graduate from high school?',array['1950s','1960s','1970s','1980s'],array['1960s'],10),
-('birthday-main',2,'fill_blank','What was the name of Mom''s first pet?',array[]::text[],array['replace me'],10),
-('birthday-main',3,'multiple_choice','Which treat would Mom choose first?',array['Chocolate cake','Apple pie','Ice cream','Cheesecake'],array['Chocolate cake'],10)
+('birthday-main',1,'multiple_choice','Which decade did Claire graduate from high school?',array['1950s','1960s','1970s','1980s'],array['1960s'],10),
+('birthday-main',2,'fill_blank','What was the name of Claire''s first pet?',array[]::text[],array['replace me'],10),
+('birthday-main',3,'multiple_choice','Which treat would Claire choose first?',array['Chocolate cake','Apple pie','Ice cream','Cheesecake'],array['Chocolate cake'],10)
 on conflict(event_id,position) do nothing;
