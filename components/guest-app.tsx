@@ -30,7 +30,7 @@ export function GuestApp() {
     ]).then(([eventResult, questionResult]) => { if (eventResult.data) setEvent(eventResult.data); if (questionResult.data) setQuestions(questionResult.data as Question[]); });
     const stored = localStorage.getItem("trivia-team"); if (stored) { try { setTeam(JSON.parse(stored)); } catch {} }
   }, []);
-  useEffect(() => { if (!team) return; refreshLeaders(); refreshPhotos(); const timer = window.setInterval(refreshLeaders, 15000); return () => window.clearInterval(timer); }, [team]);
+  useEffect(() => { if (!team) return; refreshTeamState(); refreshLeaders(); refreshPhotos(); const timer = window.setInterval(refreshLeaders, 15000); return () => window.clearInterval(timer); }, [team]);
   useEffect(() => {
     const context = (document as Document & { modelContext?: { registerTool: (tool: unknown, options?: { signal?: AbortSignal }) => void | Promise<void> } }).modelContext;
     if (!context?.registerTool || !team) return;
@@ -53,6 +53,7 @@ export function GuestApp() {
     setJoining(false); localStorage.setItem("trivia-team", JSON.stringify(joined)); setTeam(joined);
   }
   async function submitQuiz() { if (!team) return; const { data, error } = await supabase.rpc("submit_quiz", { p_team_id: team.teamId, p_token: team.token, p_answers: answers }); if (!error && data?.[0]) { setResult({ score: data[0].score, possible: data[0].possible, rank: data[0].rank }); refreshLeaders(); } }
+  async function refreshTeamState() { if (!team) return; const { data } = await supabase.rpc("get_team_state", { p_team_id: team.teamId, p_token: team.token }); const state = data?.[0]; if (state?.completed) setResult({ score: state.score, possible: state.possible, rank: Number(state.rank) }); }
   async function refreshLeaders() { const { data } = await supabase.rpc("get_leaderboard", { p_event_id: EVENT_ID }); setLeaders(((data ?? []) as LeaderRow[]).map((t) => ({ id: t.id, name: t.name, score: t.score, rank: Number(t.rank), photoUrl: publicPhotoUrl(t.photo_path) }))); }
   async function refreshPhotos() { if (!team) return; const { data } = await supabase.rpc("get_my_photos", { p_team_id: team.teamId, p_token: team.token }); setMyPhotos((data ?? []).map((p: { id: string; object_path: string; caption: string }) => ({ id: p.id, url: publicPhotoUrl(p.object_path)!, caption: p.caption }))); }
   async function uploadBonus(e: React.FormEvent<HTMLFormElement>) { e.preventDefault(); if (!team) return; const form = e.currentTarget; const data = new FormData(form); const file = data.get("photo"); if (!(file instanceof File)) return; const path = `events/${EVENT_ID}/bonus/${team.teamId}/${crypto.randomUUID()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "-")}`; const uploaded = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, upsert: false }); if (!uploaded.error) { await supabase.rpc("add_bonus_photo", { p_team_id: team.teamId, p_token: team.token, p_object_path: path, p_caption: String(data.get("caption") ?? "") }); form.reset(); await refreshPhotos(); } }

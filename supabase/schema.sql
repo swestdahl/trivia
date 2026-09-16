@@ -121,12 +121,20 @@ $$;
 create or replace function public.submit_quiz(p_team_id uuid, p_token text, p_answers jsonb)
 returns table(score integer, possible integer, rank bigint)
 language plpgsql security definer set search_path = pg_catalog, public, extensions as $$
-declare q record; supplied text; awarded integer; total integer := 0; maximum integer := 0; team_event text;
+declare q record; supplied text; awarded integer; total integer := 0; maximum integer := 0; team_event text; team_completed_at timestamptz; saved_score integer;
 begin
-  select event_id into team_event from public.teams where id = p_team_id and token_hash = digest(p_token,'sha256');
+  select event_id, completed_at, score into team_event, team_completed_at, saved_score
+  from public.teams
+  where id = p_team_id and token_hash = digest(p_token,'sha256')
+  for update;
   if team_event is null then raise exception 'Invalid team session'; end if;
+  select coalesce(sum(points),0)::integer into maximum from public.questions where event_id = team_event;
+  if team_completed_at is not null then
+    return query select saved_score, maximum, (select count(*)+1 from public.teams where event_id=team_event and completed_at is not null and teams.score>saved_score);
+    return;
+  end if;
   for q in select * from public.questions where event_id = team_event order by position loop
-    supplied := coalesce(p_answers->>q.id::text,''); maximum := maximum + q.points;
+    supplied := coalesce(p_answers->>q.id::text,'');
     awarded := case when exists(select 1 from unnest(q.answers) accepted where public.normalize_answer(accepted)=public.normalize_answer(supplied)) then q.points else 0 end;
     total := total + awarded;
     insert into public.responses(team_id,question_id,answer,correct,points_awarded) values(p_team_id,q.id,supplied,awarded>0,awarded)
@@ -134,6 +142,24 @@ begin
   end loop;
   update public.teams set score=total,completed_at=now() where id=p_team_id;
   return query select total,maximum,(select count(*)+1 from public.teams where event_id=team_event and completed_at is not null and teams.score>total);
+end;
+$$;
+
+create or replace function public.get_team_state(p_team_id uuid, p_token text)
+returns table(completed boolean, score integer, possible integer, rank bigint)
+language plpgsql stable security definer set search_path = pg_catalog, public, extensions as $$
+declare team_event text; team_completed_at timestamptz; team_score integer; maximum integer;
+begin
+  select event_id, completed_at, teams.score into team_event, team_completed_at, team_score
+  from public.teams
+  where id = p_team_id and token_hash = digest(p_token,'sha256');
+  if team_event is null then raise exception 'Invalid team session'; end if;
+  select coalesce(sum(points),0)::integer into maximum from public.questions where event_id = team_event;
+  return query select
+    team_completed_at is not null,
+    team_score,
+    maximum,
+    case when team_completed_at is null then null::bigint else (select count(*)+1 from public.teams where event_id=team_event and completed_at is not null and teams.score>team_score) end;
 end;
 $$;
 
@@ -189,10 +215,10 @@ create policy "admins read own admin row" on public.admins for select to authent
 grant select on public.events,public.questions to anon,authenticated;
 grant select,insert,update,delete on public.events,public.questions,public.teams,public.responses,public.photos to authenticated;
 revoke all on function private.is_admin() from public;
-revoke all on function public.admin_status(),public.claim_admin(),public.join_team(text,text),public.set_team_photo(uuid,text,text),public.submit_quiz(uuid,text,jsonb),public.add_bonus_photo(uuid,text,text,text),public.get_my_photos(uuid,text),public.get_leaderboard(text) from public;
+revoke all on function public.admin_status(),public.claim_admin(),public.join_team(text,text),public.set_team_photo(uuid,text,text),public.submit_quiz(uuid,text,jsonb),public.get_team_state(uuid,text),public.add_bonus_photo(uuid,text,text,text),public.get_my_photos(uuid,text),public.get_leaderboard(text) from public;
 revoke all on function public.admin_status(),public.claim_admin() from anon;
 grant execute on function private.is_admin() to authenticated;
-grant execute on function public.join_team(text,text),public.set_team_photo(uuid,text,text),public.submit_quiz(uuid,text,jsonb),public.add_bonus_photo(uuid,text,text,text),public.get_my_photos(uuid,text),public.get_leaderboard(text) to anon,authenticated;
+grant execute on function public.join_team(text,text),public.set_team_photo(uuid,text,text),public.submit_quiz(uuid,text,jsonb),public.get_team_state(uuid,text),public.add_bonus_photo(uuid,text,text,text),public.get_my_photos(uuid,text),public.get_leaderboard(text) to anon,authenticated;
 grant execute on function public.admin_status(),public.claim_admin() to authenticated;
 
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
