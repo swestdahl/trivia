@@ -88,3 +88,14 @@ body {
 .admin-heading { margin-top: .15rem; font-size: 2rem; line-height: 1.1; font-weight: 900; letter-spacing: -.03em; }
 .admin-label { display: block; margin-bottom: .45rem; font-size: .88rem; font-weight: 800; }
 @media (max-width: 520px) { .choice-button { grid-template-columns: 2.4rem 1fr; } }
+
+/* Sock Hop: mid-century dance-hall visual identity */
+.sock-hop-page { background-color: #f9e9df; background-image: radial-gradient(#eea7ad 1.4px, transparent 1.4px); background-size: 22px 22px; }
+.sock-hop-card { box-shadow: 12px 12px 0 #165f68; }
+.sock-hop-hero { background: radial-gradient(circle at 90% 12%, #ffdf80 0 8%, transparent 8.5%), repeating-conic-gradient(from 45deg at 50% 100%, #176c77 0deg 12deg, #237d87 12deg 24deg); isolation: isolate; }
+.sock-hop-hero::before { content: ""; position: absolute; right: -45px; bottom: -50px; width: 240px; height: 240px; border: 25px solid #20232b; border-radius: 50%; background: radial-gradient(circle, #ffe2a5 0 12%, #e88d9d 12% 20%, #20232b 21% 24%, #20232b 25% 100%); opacity: .28; z-index: -1; }
+.sock-hop-hero .font-display { text-shadow: 4px 5px 0 #123f4a; }
+.sock-hop-page .party-badge { background: #f4a5b5; }
+.sock-hop-page .choice-button.is-selected { background: #a7e0db; }
+.sock-hop-page .choice-button.is-selected span { background: #176c77; }
+@media (prefers-reduced-motion: no-preference) { .sock-hop-page .choice-button:hover { transform: translateY(-2px) rotate(-.25deg); } }
