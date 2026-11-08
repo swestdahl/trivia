@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Trivia",
-  description: "A party quiz, live leaderboard, and shared photo album.",
+  title: "Sock Hop Trivia Night",
+  description: "Rock around the clock with 1950s trivia, birthday memories, a live leaderboard, and party photos.",
 };
 
 export default function RootLayout({
