@@ -14,14 +14,14 @@ export function createZip(entries: ZipEntry[]): Blob {
     const crc = crc32(entry.bytes);
     const local = new Uint8Array(30 + name.length); const l = new DataView(local.buffer);
     u32(l, 0, 0x04034b50); u16(l, 4, 20); u16(l, 6, 0x800); u16(l, 8, 0); u32(l, 14, crc); u32(l, 18, size); u32(l, 22, size); u16(l, 26, name.length); local.set(name, 30);
-    parts.push(local, entry.bytes.slice().buffer); // copy into a Blob-compatible ArrayBuffer
+    parts.push(local.buffer.slice(0) as ArrayBuffer, Uint8Array.from(entry.bytes).buffer as ArrayBuffer); // use Blob-compatible ArrayBuffers
     const central = new Uint8Array(46 + name.length); const d = new DataView(central.buffer);
     u32(d, 0, 0x02014b50); u16(d, 4, 20); u16(d, 6, 20); u16(d, 8, 0x800); u32(d, 16, crc); u32(d, 20, size); u32(d, 24, size); u16(d, 28, name.length); u32(d, 42, offset); central.set(name, 46); directory.push(central);
     offset += local.length + size;
   }
   const directorySize = directory.reduce((sum, item) => sum + item.length, 0);
   if (offset + directorySize > 0xffffffff || entries.length > 65535) throw new Error("Album too large for one ZIP.");
-  parts.push(...directory);
-  const end = new Uint8Array(22); const e = new DataView(end.buffer); u32(e, 0, 0x06054b50); u16(e, 8, entries.length); u16(e, 10, entries.length); u32(e, 12, directorySize); u32(e, 16, offset); parts.push(end);
+  parts.push(...directory.map((item) => item.buffer.slice(0) as ArrayBuffer));
+  const end = new Uint8Array(22); const e = new DataView(end.buffer); u32(e, 0, 0x06054b50); u16(e, 8, entries.length); u16(e, 10, entries.length); u32(e, 12, directorySize); u32(e, 16, offset); parts.push(end.buffer.slice(0) as ArrayBuffer);
   return new Blob(parts, { type: "application/zip" });
 }
