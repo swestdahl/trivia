@@ -93,6 +93,7 @@ function BonusPhotos({ onUpload, photos, uploading, error, success }: { onUpload
   const cameraRef = useRef<HTMLInputElement>(null);
   const libraryRef = useRef<HTMLInputElement>(null);
   const [selected, setSelected] = useState<File | null>(null);
+  useEffect(() => { if (success) setSelected(null); }, [success]);
   function selectFile(file?: File) { if (file) setSelected(file); }
   return <section className="mx-auto max-w-3xl rounded-[1.75rem] border-[3px] border-[#292018] bg-[#fffaf0] p-5 shadow-[8px_9px_0_#d8b263] sm:p-10">
     <div className="text-center"><h2 className="font-display text-3xl font-black">Sock Hop Snapshots</h2><p className="mt-2 text-[#746657]">Catch the dancing, cake, and fabulous outfits!</p></div>
